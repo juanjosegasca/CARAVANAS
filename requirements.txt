@@ -1,0 +1,7 @@
+flask
+twilio
+pillow
+pytesseract
+gspread
+oauth2client
+requests
