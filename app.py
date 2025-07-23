@@ -14,6 +14,16 @@ app = Flask(__name__)
 google_creds_dict = json.loads(os.environ['GOOGLE_CREDENTIALS'])
 credentials = service_account.Credentials.from_service_account_info(google_creds_dict)
 
+scopes = [
+    "https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/drive"
+]
+
+creds = service_account.Credentials.from_service_account_info(
+    json.loads(os.environ['GOOGLE_CREDENTIALS']),
+    scopes=scopes
+)
+
 # Inicializar clientes
 vision_client = vision.ImageAnnotatorClient(credentials=credentials)
 gc = gspread.authorize(credentials)
