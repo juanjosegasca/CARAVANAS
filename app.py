@@ -10,23 +10,24 @@ import numpy as np
 
 app = Flask(__name__)
 
-# Cargar credenciales de Google desde variables de entorno
-google_creds_dict = json.loads(os.environ['GOOGLE_CREDENTIALS'])
-credentials = service_account.Credentials.from_service_account_info(google_creds_dict)
-
+# Scopes para Google Sheets y Drive
 scopes = [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive"
 ]
 
-creds = service_account.Credentials.from_service_account_info(
-    json.loads(os.environ['GOOGLE_CREDENTIALS']),
-    scopes=scopes
-)
+# Cargar credenciales desde variable de entorno
+google_creds_dict = json.loads(os.environ['GOOGLE_CREDENTIALS'])
+
+# Credenciales con scopes para gspread (Sheets y Drive)
+creds = service_account.Credentials.from_service_account_info(google_creds_dict, scopes=scopes)
+
+# Credenciales sin scopes para Vision API
+vision_creds = service_account.Credentials.from_service_account_info(google_creds_dict)
 
 # Inicializar clientes
-vision_client = vision.ImageAnnotatorClient(credentials=credentials)
-gc = gspread.authorize(credentials)
+vision_client = vision.ImageAnnotatorClient(credentials=vision_creds)
+gc = gspread.authorize(creds)
 sheet = gc.open("caravanas").sheet1  # Asegurate de compartir la hoja con el mail del service account
 
 def preprocesar_imagen(path_img):
