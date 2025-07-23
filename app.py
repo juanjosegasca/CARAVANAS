@@ -7,7 +7,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 import requests
 import os
 import io
-
+import json
 app = Flask(__name__)
 
 # Autenticación Google Vision API
