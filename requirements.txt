@@ -1,16 +1,10 @@
-flask
-twilio
-pillow
-pytesseract
-gspread
-oauth2client
+Flask
 requests
-flask
-twilio
 google-cloud-vision
 google-auth
 google-auth-oauthlib
 gspread
 oauth2client
-requests
+opencv-python-headless
+numpy
 
