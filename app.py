@@ -8,19 +8,23 @@ import requests
 import os
 import io
 import json
+
 app = Flask(__name__)
 
-# Autenticación Google Vision API
-credentials = service_account.Credentials.from_service_account_info(
-    json.loads(os.environ['GOOGLE_CREDENTIALS'])
-)
+# ✅ Convertir GOOGLE_CREDENTIALS (string plano) a dict
+creds_dict = json.loads(os.environ['GOOGLE_CREDENTIALS'])
+
+# ✅ Arreglar el campo private_key (para saltos de línea reales)
+creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
+
+# ✅ Inicializar cliente de Vision
+credentials = service_account.Credentials.from_service_account_info(creds_dict)
 vision_client = vision.ImageAnnotatorClient(credentials=credentials)
 
-# Autenticación Google Sheets
+# ✅ Inicializar cliente de Google Sheets
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-creds_dict = json.loads(os.environ['GOOGLE_CREDENTIALS'])
 creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
-sheet = gspread.authorize(creds).open("MiHoja").sheet1
+sheet = gspread.authorize(creds).open("MiHoja").sheet1  # <- Cambiar "MiHoja" por el nombre real
 
 @app.route("/", methods=["POST"])
 def whatsapp_bot():
@@ -33,7 +37,6 @@ def whatsapp_bot():
         media_url = request.values.get("MediaUrl0")
         img_data = requests.get(media_url).content
 
-        # Preparar imagen para Vision API
         image = vision.Image(content=img_data)
         response = vision_client.text_detection(image=image)
         texts = response.text_annotations
@@ -64,4 +67,5 @@ def whatsapp_bot():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
 
