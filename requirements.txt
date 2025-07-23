@@ -5,3 +5,12 @@ pytesseract
 gspread
 oauth2client
 requests
+flask
+twilio
+google-cloud-vision
+google-auth
+google-auth-oauthlib
+gspread
+oauth2client
+requests
+
