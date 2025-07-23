@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "rising-medley-459814-q2",
+  "private_key_id": "e22d2ea79b8fcf8adb012662f886b1fe537ad2ea",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDGRq7D/4K457B4\nMnvL65w04AGxjusBPdin6yXqKWl6dMBDDUx35xxoo89nWRwCaS+m27AuUgPd9sDE\nAy8568bDiPdTdOfZBjdAvEdekCfwnEJhYLitKBema0D/ZDk5KN/+nM61/g4t2B1O\n1VkcYFrrZ8+u+n/lv5ygyDyAidL/Q1lKSwogv5QBjWG+ya2h4GbJuSMIkkP7hiNp\neDwPL4oFiJHSEL5y5kQttd0sE+tfwfITDe/QrP1myWYUVonWZMPeszX/GWrq7oyC\nsAy4HPmpwAkEIUrw4TbLqVlJangG67VQdqZaaf6YQOfrYyuNs77iXKkLJ9X7JzVh\ntC7kLvlPAgMBAAECggEABLugM5IT4iQpsA6aOHX4fqWCAxBOPMi9GLkJL9LOdpgE\n+G2qcx/Rq53+viYyAAXX+xLWo9cV5qgbnRXA0ckvaGJDi8krx2dgv0Q7uslNW6e1\nc32A13qiIePH3Ft57m5rvX9WLkvYJ1updho5wZle/qxSNN3Kdzira6Jvi0lGDdRY\nXAHQtZGzeRKbKFNL/EnDBN5lovhKMZCt6nLxgde9F8KO+aIvWt+DzD2NwqSxQEJP\nG4rJ2jZJ5/Vr5M8ZBokKAbn8j8fC3uNUCpkN+0E1V1gbqkWEmlmo9c5pE7R62jIo\n1vGH+7JoDPIQGi/T3p45DQSKzNC0WZ7bZr2HhRU2AQKBgQDohRslJSWrdZPYCuRu\nWh7i77fIY5CenAqIchiAh3gbPQY71wHAmJJulM8uHzl+BfcnoVM8EcYZIbM4X8my\nr63Y2ela20stOk7zRALjqh5G5Vz1u9jQoZXAMfwUrAODALDU/8MWz7Kfnpi6d4Lk\npEGBBkMbVIVJaibSMyt5i/5WAQKBgQDaTFYGKE7xvRmVS9FEsaDYbuf4cdW3uYG+\nunex8lWqxsjIHfFULHX2T6sSjHvSqYx+AufwbfnYgsMzIaMhxw4a7CJZLreBoa5m\nz0ZhTlkTpM/39KQep8OUlGEvNqAmV7/Gbw9bl/ZL3xnfroanzlktP0ByylNo/mhq\nMYAAeWhvTwKBgBV37LiyRFcfZQYmg07ZDU8AuSRMZRbv610Lw81iNKm3KbMut9+z\ndpm1LafhhCppnJdRIuFB9tttLCIBXhscc125SP11j+xeHNoDJo0ksOT02m9p56vj\nr3LuaoryEuTulGUmNDoP9TsdppZY4IIB1HZ4QIvuctwDbBAuX046qcIBAoGAfyeD\n3CZShaDebAYzqU3GIQvI9wBnupLFrnEzE2XS3JzZiydV0O/s7kJNpYpK/dRgz22l\n6HhG1gSk6v2m5h/qaWguQcBih5HD4oLNvhRC8pxHv2iyyGB0HfGoAjZRZsQqIs3C\nJloHzv3vNkmUid46N47mXXbYywmVjHW015HgcSUCgYEAlKTVWLKDE+m5IJTaGUS7\nBmXmcAHcjMQk8gzRGX3T0+HhpU/Fat65zJ9hDIf6jIK75WLoaj+JS9kvlsXQEuYR\nsU51TZrHjbhScalgaz1qCOLlWExJkC1bOEzZy289xPTk57xpgaiDjw/dQtDHx28m\nUMAwfj7hGXXdXdnySWYjFiY=\n-----END PRIVATE KEY-----\n",
+  "client_email": "caravanas@rising-medley-459814-q2.iam.gserviceaccount.com",
+  "client_id": "105873917594738481077",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/caravanas%40rising-medley-459814-q2.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
