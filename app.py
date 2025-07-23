@@ -15,14 +15,12 @@ credentials = service_account.Credentials.from_service_account_info(creds_dict)
 # Cliente Google Vision
 vision_client = vision.ImageAnnotatorClient(credentials=credentials)
 
-# Cliente Google Sheets
+# Cliente Google Sheets con autorización
 gspread_creds = credentials.with_scopes([
     'https://www.googleapis.com/auth/spreadsheets',
     'https://www.googleapis.com/auth/drive'
 ])
-gc = gspread.Client(auth=gspread_creds)
-gc.session = gspread.httpsession.HTTPSession()  # inicializa sesión
-gc.login()
+gc = gspread.authorize(gspread_creds)
 sheet = gc.open("caravanas").sheet1  # Cambia "caravanas" por el nombre real de tu hoja
 
 def ocr_image(content):
@@ -39,7 +37,6 @@ def home():
 
 @app.route("/procesar", methods=["POST"])
 def procesar():
-    # Puede recibir JSON con "texto" o archivo imagen en multipart/form-data
     if "file" in request.files:
         file = request.files["file"]
         content = file.read()
@@ -51,10 +48,8 @@ def procesar():
         if not texto:
             return jsonify({"error": "No se recibió texto ni archivo"}), 400
 
-    # Buscá el texto en la hoja de cálculo en la columna "Caravana"
     try:
         records = sheet.get_all_records()
-        # Buscar fila donde "Caravana" coincida con texto OCR (case insensitive)
         resultado = next(
             (r for r in records if str(r.get("Caravana", "")).lower() == texto.lower()),
             None
@@ -71,6 +66,7 @@ def procesar():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
+
 
 
 
