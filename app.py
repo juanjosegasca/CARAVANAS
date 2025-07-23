@@ -1,53 +1,32 @@
-import os
-import json
 from flask import Flask, request, jsonify
-from google.oauth2 import service_account
-from google.cloud import vision
-import gspread
+from twilio.twiml.messaging_response import MessagingResponse
+import requests
 
-app = Flask(__name__)
+# (el resto de imports y configuración que ya tenés)
 
-# Cargar credenciales de Google desde variable de entorno
-creds_dict = json.loads(os.environ['GOOGLE_CREDENTIALS'])
-creds_dict['private_key'] = creds_dict['private_key'].replace('\\n', '\n')
-credentials = service_account.Credentials.from_service_account_info(creds_dict)
+@app.route("/webhook", methods=["POST"])
+def whatsapp_webhook():
+    incoming_msg = request.values.get('Body', '').strip()
+    num_media = int(request.values.get('NumMedia', 0))
 
-# Cliente Google Vision
-vision_client = vision.ImageAnnotatorClient(credentials=credentials)
+    resp = MessagingResponse()
+    msg = resp.message()
 
-# Cliente Google Sheets con autorización
-gspread_creds = credentials.with_scopes([
-    'https://www.googleapis.com/auth/spreadsheets',
-    'https://www.googleapis.com/auth/drive'
-])
-gc = gspread.authorize(gspread_creds)
-sheet = gc.open("caravanas").sheet1  # Cambia "caravanas" por el nombre real de tu hoja
-
-def ocr_image(content):
-    image = vision.Image(content=content)
-    response = vision_client.text_detection(image=image)
-    texts = response.text_annotations
-    if texts:
-        return texts[0].description.strip()
-    return ""
-
-@app.route("/", methods=["GET"])
-def home():
-    return "Servidor Flask con OCR y Google Sheets funcionando!", 200
-
-@app.route("/procesar", methods=["POST"])
-def procesar():
-    if "file" in request.files:
-        file = request.files["file"]
-        content = file.read()
-        texto = ocr_image(content)
+    if num_media > 0:
+        # Si mandaron una imagen, obtenemos la URL y la descargamos
+        media_url = request.values.get('MediaUrl0')
+        media_content = requests.get(media_url).content
+        texto = ocr_image(media_content)
         if not texto:
-            return jsonify({"error": "No se pudo extraer texto, ingrese manualmente"}), 400
+            msg.body("No pude extraer texto de la imagen. Por favor, escribí el texto manualmente.")
+            return str(resp)
     else:
-        texto = request.json.get("texto", "")
+        texto = incoming_msg
         if not texto:
-            return jsonify({"error": "No se recibió texto ni archivo"}), 400
+            msg.body("No recibí texto ni imagen.")
+            return str(resp)
 
+    # Buscar en Google Sheets
     try:
         records = sheet.get_all_records()
         resultado = next(
@@ -55,17 +34,17 @@ def procesar():
             None
         )
     except Exception as e:
-        return jsonify({"error": f"Error accediendo a Google Sheets: {str(e)}"}), 500
+        msg.body(f"Error accediendo a Google Sheets: {str(e)}")
+        return str(resp)
 
     if resultado:
-        corral = resultado.get("Corral", None)
-        return jsonify({"Caravana": texto, "Corral": corral})
+        corral = resultado.get("Corral", "No tiene Corral asignado")
+        msg.body(f"Caravana: {texto}\nCorral: {corral}")
     else:
-        return jsonify({"mensaje": "No se encontró la caravana en la hoja"}), 404
+        msg.body("No encontré la caravana en la hoja.")
 
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port, debug=True)
+    return str(resp)
+
 
 
 
