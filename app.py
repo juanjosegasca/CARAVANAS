@@ -12,12 +12,12 @@ import tempfile
 
 app = Flask(__name__)
 
-# ✅ Recuperar GOOGLE_CREDENTIALS y parsear correctamente
+# ✅ Cargar y ajustar credenciales desde variable de entorno
 google_creds = os.environ['GOOGLE_CREDENTIALS']
 creds_dict = json.loads(google_creds)
 creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
 
-# ✅ Crear archivo temporal para Google APIs
+# ✅ Escribir archivo temporal con credenciales
 with tempfile.NamedTemporaryFile(mode="w+", delete=False) as tmp:
     json.dump(creds_dict, tmp)
     tmp.flush()
@@ -25,11 +25,11 @@ with tempfile.NamedTemporaryFile(mode="w+", delete=False) as tmp:
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
     gspread_creds = ServiceAccountCredentials.from_json_keyfile_name(tmp.name, scope)
 
-# ✅ Cliente de Google Vision
+# ✅ Cliente Google Cloud Vision
 vision_client = vision.ImageAnnotatorClient(credentials=credentials)
 
-# ✅ Cliente de Google Sheets
-sheet = gspread.authorize(gspread_creds).open("MiHoja").sheet1  # <-- Cambiá "MiHoja" por el nombre real
+# ✅ Cliente Google Sheets (hoja llamada "caravanas")
+sheet = gspread.authorize(gspread_creds).open("caravanas").sheet1
 
 @app.route("/", methods=["POST"])
 def whatsapp_bot():
@@ -72,6 +72,7 @@ def whatsapp_bot():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
