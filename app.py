@@ -1,120 +1,91 @@
 import os
 import json
 import requests
-from flask import Flask, request, jsonify
-from twilio.twiml.messaging_response import MessagingResponse
-from google.oauth2 import service_account
+from flask import Flask, request
 from google.cloud import vision
+from google.oauth2 import service_account
 import gspread
+import cv2
+import numpy as np
 
-# Inicializa Flask
 app = Flask(__name__)
 
-# Cargar credenciales desde variable de entorno
-creds_dict = json.loads(os.environ['GOOGLE_CREDENTIALS'])
-creds_dict['private_key'] = creds_dict['private_key'].replace('\\n', '\n')
-credentials = service_account.Credentials.from_service_account_info(creds_dict)
+# Cargar credenciales de Google desde variables de entorno
+google_creds_dict = json.loads(os.environ['GOOGLE_CREDENTIALS'])
+credentials = service_account.Credentials.from_service_account_info(google_creds_dict)
 
-# Google Vision client
+# Inicializar clientes
 vision_client = vision.ImageAnnotatorClient(credentials=credentials)
+gc = gspread.authorize(credentials)
+sheet = gc.open("caravanas").sheet1  # Asegurate de compartir la hoja con el mail del service account
 
-# Google Sheets client
-gspread_creds = credentials.with_scopes([
-    'https://www.googleapis.com/auth/spreadsheets',
-    'https://www.googleapis.com/auth/drive'
-])
-gc = gspread.authorize(gspread_creds)
-sheet = gc.open("caravanas").sheet1  # <- Asegurate que sea el nombre exacto
+def preprocesar_imagen(path_img):
+    img = cv2.imread(path_img)
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+    enhanced = clahe.apply(gray)
+    thresh = cv2.adaptiveThreshold(enhanced, 255,
+                                   cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+                                   cv2.THRESH_BINARY_INV, 11, 2)
+    salida = "preprocesada.jpg"
+    cv2.imwrite(salida, thresh)
+    return salida
 
-# Función OCR
-def ocr_image(content):
+def extraer_texto(path):
+    path_proc = preprocesar_imagen(path)
+    with open(path_proc, "rb") as img_file:
+        content = img_file.read()
     image = vision.Image(content=content)
     response = vision_client.text_detection(image=image)
     texts = response.text_annotations
-    return texts[0].description.strip() if texts else ""
+    if texts:
+        return texts[0].description.strip().replace('\n', '')
+    return None
 
-# Ruta simple para verificar
+def buscar_corral_por_caravana(valor_caravana):
+    datos = sheet.get_all_records()
+    for fila in datos:
+        if str(fila["Caravana"]) == str(valor_caravana):
+            return fila.get("Corral", "No encontrado")
+    return "Caravana no encontrada"
+
 @app.route("/", methods=["GET"])
-def home():
-    return "Servidor OCR activo ✅", 200
+def index():
+    return "Bot OCR activo ✅"
 
-# Ruta para procesar desde WhatsApp
 @app.route("/webhook", methods=["POST"])
-def whatsapp_webhook():
-    incoming_msg = request.values.get('Body', '').strip()
-    num_media = int(request.values.get('NumMedia', 0))
-
-    resp = MessagingResponse()
-    msg = resp.message()
-
-    # Si viene imagen
-    if num_media > 0:
-        media_url = request.values.get('MediaUrl0')
-        try:
-            media_content = requests.get(media_url).content
-            texto = ocr_image(media_content)
-        except Exception as e:
-            msg.body("❌ Error al procesar la imagen.")
-            return str(resp)
-        if not texto:
-            msg.body("⚠️ No se detectó texto. Escribilo manualmente.")
-            return str(resp)
-    else:
-        texto = incoming_msg
-        if not texto:
-            msg.body("⚠️ No recibí imagen ni texto.")
-            return str(resp)
-
+def webhook():
     try:
-        records = sheet.get_all_records()
-        resultado = next(
-            (r for r in records if str(r.get("Caravana", "")).lower() == texto.lower()),
-            None
-        )
+        mensaje = request.form.get("Body")
+        media_url = request.form.get("MediaUrl0")
+
+        if media_url:
+            extension = media_url.split(".")[-1]
+            img_path = f"imagen_recibida.{extension}"
+            img_data = requests.get(media_url).content
+            with open(img_path, "wb") as f:
+                f.write(img_data)
+
+            texto_detectado = extraer_texto(img_path)
+
+            if texto_detectado:
+                corral = buscar_corral_por_caravana(texto_detectado)
+                respuesta = f"Caravana detectada: {texto_detectado}\nCorral: {corral}"
+            else:
+                respuesta = "No se pudo leer la caravana. Por favor, ingrésala manualmente."
+
+        elif mensaje:
+            corral = buscar_corral_por_caravana(mensaje.strip())
+            respuesta = f"Corral para caravana {mensaje.strip()}: {corral}"
+        else:
+            respuesta = "Envía una foto o número de caravana."
+
+        return respuesta
     except Exception as e:
-        msg.body("❌ Error al acceder a la hoja.")
-        return str(resp)
-
-    if resultado:
-        corral = resultado.get("Corral", "Sin asignar")
-        msg.body(f"✅ Caravana: {texto}\nCorral: {corral}")
-    else:
-        msg.body("❌ No encontré esa caravana en la hoja.")
-
-    return str(resp)
-
-# Ruta para pruebas manuales o Postman
-@app.route("/procesar", methods=["POST"])
-def procesar():
-    if "file" in request.files:
-        file = request.files["file"]
-        content = file.read()
-        texto = ocr_image(content)
-        if not texto:
-            return jsonify({"error": "No se pudo extraer texto de la imagen"}), 400
-    else:
-        texto = request.json.get("texto", "")
-        if not texto:
-            return jsonify({"error": "No se recibió texto ni archivo"}), 400
-
-    try:
-        records = sheet.get_all_records()
-        resultado = next(
-            (r for r in records if str(r.get("Caravana", "")).lower() == texto.lower()),
-            None
-        )
-    except Exception as e:
-        return jsonify({"error": f"Error accediendo a Google Sheets: {str(e)}"}), 500
-
-    if resultado:
-        corral = resultado.get("Corral", None)
-        return jsonify({"Caravana": texto, "Corral": corral})
-    else:
-        return jsonify({"mensaje": "No se encontró la caravana en la hoja"}), 404
+        return f"❌ Error: {str(e)}"
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port, debug=True)
+    app.run(debug=True)
 
 
 
